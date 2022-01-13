@@ -1,0 +1,3 @@
+include README.md
+include memd_api/data/*.ini
+include memd_api/data/*.json

@@ -1,0 +1,17 @@
+*.pyc
+.idea/
+.DS_Store
+api_docs/YC_Eligibility_API_Package_V2_2020.pdf
+.secrets.sh
+*.pem
+web-variables.env
+secrets/*
+cloud-formation-template.yml
+flask_app/flask_app/api_docs/*
+session-manager-plugin.pkg
+celery_app/dist
+*.egg-info
+dist/
+api_tests/
+memd_api_output/
+client_config.json

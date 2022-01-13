@@ -1,0 +1,18 @@
+{
+    "phone": "602-755-7777",
+    "dob": "1987-07-07T00:00:00",
+    "gender": "M",
+    "address": {
+        "address1": "777 E TestDr",
+        "address2": null,
+        "city": "Scottsdale",
+        "state": "AZ",
+        "zipCode": "85281"
+    },
+    "rxDiscounts": {},
+    "termsAgreed": true,
+    "preferredLanguage": "NP",
+    "relationship": "18",
+    "misc3": "",
+    "benefitend": ""
+}

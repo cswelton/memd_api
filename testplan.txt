@@ -1,0 +1,17 @@
+# 1: Create new user
+memd-api primary-member create
+# Copy externalID
+# Copy first last name json file
+
+#2: Retrieve created user
+memd-api primary-member inspect --external-id e7d1ab9c-ab1c-4b6b-8f3e-a56bce911dfe
+
+#3: Update user
+# change phone
+# Create an update json file at ~/.memd_api/update/james_lawson.json
+# put in new phone value and external id
+
+# verify current value
+memd-api primary-member inspect --external-id e7d1ab9c-ab1c-4b6b-8f3e-a56bce911dfe
+#  "phone": "6027557777",
+# apply changes
