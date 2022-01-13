@@ -154,10 +154,10 @@ class PrimaryMember(Base):
         if dry_run:
             active_policies = self.active_policies()
             for p in active_policies:
-                deactivated.append({p["plancode"]: self.terminate_policy(p["plancode"], dry_run=True)})
+                deactivated.append({"plancode": p["plancode"], p["plancode"]: self.terminate_policy(p["plancode"], dry_run=True)})
         else:
             for p in self.active_policies():
-                deactivated.append({p["plancode"]: self.terminate_policy(p["plancode"], dry_run=dry_run)})
+                deactivated.append({"plancode": p["plancode"], p["plancode"]: self.terminate_policy(p["plancode"], dry_run=dry_run)})
                 self.reload()
                 return self.deactivate_policies(dry_run=dry_run, deactivated=deactivated, _count=_count)
         return deactivated
@@ -181,6 +181,7 @@ class PrimaryMember(Base):
             result = {"terminated": self.active_policies()}
         else:
             result = {"terminated": self.deactivate_policies(dry_run=dry_run)}
+        self.logger.info(f"Termintated policies: {result}")
         self.logger.info(f"Creating new policy for {self._id} plancode {plancode} dry_run={dry_run}")
         if not dry_run:
             url = f"{self._client.base_url}/v1/partnermember/{self._id}/policy/"
