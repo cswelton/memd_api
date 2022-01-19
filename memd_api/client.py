@@ -240,6 +240,16 @@ class Client:
         member_data = self._post_json(url, member_dict, raise_for_status=True)
         return PrimaryMember(self, **member_data)
 
+    def member_data(self, external_id):
+        url = f"{self.base_url}/v1/partnermember/{external_id}"
+        r = self.session.get(url, headers={"Accept": "application/json"})
+        try:
+            r.raise_for_status()
+        except Exception as exc:
+            return None
+        else:
+            return r.json()
+
     def get_or_create_primary_member(self, member_dict, ensure_plancode=True, dry_run=False):
         """
         Either creates a new primary member or retrieves an existing one
@@ -250,19 +260,15 @@ class Client:
         external_id = member_dict['externalID']
         benefitstart = datetime.datetime.fromisoformat(member_dict['benefitstart'])
         plancode = member_dict["plancode"]
-        url = f"{self.base_url}/v1/partnermember/{external_id}"
-        r = self.session.get(url, headers={"Accept": "application/json"})
-        try:
-            r.raise_for_status()
-        except requests.exceptions.RequestException as exc:
-            self.logger.debug(f"{exc.request.url} {exc.response.status_code} {exc.response.reason}")
+        created = False
+        member_data = self.member_data(external_id)
+        if member_data is None:
             self.logger.info(f"Primary member with ID {external_id} not found, creating new member.")
             member = self.create_primary_member(member_dict)
+            created = True
         else:
-            self.logger.info(f"Primary member {external_id} found.")
-            member_data = r.json()
             member = PrimaryMember(self, **member_data)
         if ensure_plancode:
             self.logger.info(f"Ensuring plancode {plancode} benefitstart: {benefitstart}")
             member.ensure_plancode(plancode, benefitstart=benefitstart, dry_run=dry_run)
-        return member
+        return member, created
