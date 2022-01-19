@@ -116,7 +116,7 @@ class PrimaryMember(Base):
         self.load(**member_data)
         self.rollback = False
         self.last_error = None
-        self.last_error_status_code = None
+        self.last_status_code = None
         self.last_error_text = None
         super().__init__()
 
@@ -204,7 +204,7 @@ class PrimaryMember(Base):
                 self.logger.warning(f"Unable to create policy for {self._id}, plancode {plancode} not found")
                 self.logger.warning("Reverting to previous policies")
                 self.last_error = str(exc)
-                self.last_error_status_code = exc.response.status_code
+                self.last_status_code = exc.response.status_code
                 self.last_error_text = exc.response.text
                 url = f"{self._client.base_url}/v1/partnermember/{self._id}/policy/"
                 for policy in result["terminated"]:
