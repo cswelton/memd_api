@@ -4,6 +4,15 @@ import datetime
 import json
 
 
+class errors:
+
+    class PlancodeRollback(Exception):
+        def __init__(self, *args, **kwargs):
+            self.member = kwargs.pop("member", None)
+            self.rollback = kwargs.pop("rollback", None)
+            super(errors.PlancodeRollback, self).__init__(*args, **kwargs)
+
+
 class Base(object):
     _data = {}
     _fields_changed = []
@@ -105,6 +114,10 @@ class PrimaryMember(Base):
         """
         self._client = client
         self.load(**member_data)
+        self.rollback = False
+        self.last_error = None
+        self.last_error_status_code = None
+        self.last_error_text = None
         super().__init__()
 
     def load(self, **member_data):
@@ -178,9 +191,9 @@ class PrimaryMember(Base):
             "plancode": plancode
         }
         if dry_run:
-            result = {"terminated": self.active_policies()}
+            result = {"created": None, "rollback": None, "terminated": self.active_policies()}
         else:
-            result = {"terminated": self.deactivate_policies(dry_run=dry_run)}
+            result = {"created": None, "rollback": None, "terminated": self.deactivate_policies(dry_run=dry_run)}
         self.logger.info(f"Termintated policies: {result}")
         self.logger.info(f"Creating new policy for {self._id} plancode {plancode} dry_run={dry_run}")
         if not dry_run:
@@ -190,6 +203,9 @@ class PrimaryMember(Base):
             except RequestException as exc:
                 self.logger.warning(f"Unable to create policy for {self._id}, plancode {plancode} not found")
                 self.logger.warning("Reverting to previous policies")
+                self.last_error = str(exc)
+                self.last_error_status_code = exc.response.status_code
+                self.last_error_text = exc.response.text
                 url = f"{self._client.base_url}/v1/partnermember/{self._id}/policy/"
                 for policy in result["terminated"]:
                     payload = {
@@ -202,6 +218,11 @@ class PrimaryMember(Base):
                     except RequestException as exc:
                         self.logger.warning(f"Error trying to revert policies for {self._id} plancode {policy['plancode']} {exc}")
                         continue
+                    else:
+                        result["rollback"] = policy["plancode"]
+                        self.last_error = str(exc)
+                        self.rollback = True
+                        return result
                 raise
             finally:
                 self.reload()
@@ -218,13 +239,15 @@ class PrimaryMember(Base):
 
     def ensure_plancode(self, plancode, benefitstart=None, dry_run=False):
         """ Checks memd api to see if plancode is active and if not activates it. """
-        result = {"terminated": [], "created": []}
+        result = {"terminated": [], "created": None, "rollback": None}
         for p in self.active_policies():
             if p["plancode"] == plancode:
                 self.logger.debug(f"Plancode {plancode} is active")
                 break
         else:
             result = self.create_policy(plancode, benefitstart=benefitstart, dry_run=dry_run)
+            if result.get("rollback"):
+                raise errors.PlancodeRollback(member=self, rollback=result["rollback"])
         return result
 
     def update(self, dry_run=False, **kwargs):
