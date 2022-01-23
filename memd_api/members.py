@@ -142,8 +142,7 @@ class PrimaryMember(Base):
                 microsecond=0).isoformat()
         self.logger.info(f"Terminating policy for {self._id} plancode {plancode} dry_run={dry_run}")
         payload = {
-            "termdate": datetime.datetime.today().replace(hour=0).replace(minute=0).replace(second=0).replace(
-                microsecond=0).isoformat()
+            "termdate": benefitend
         }
         if not dry_run:
             self.logger.debug(f"Terminating policy for {self._id} policy {plancode}")
